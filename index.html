@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brief de Marca</title>
+<style>
+  :root{
+    --bg: #1C3A1E;
+    --bg-panel: #23421F;
+    --bg-panel-2: #2A4A27;
+    --border: #3B5A38;
+    --text: #EFEAD9;
+    --text-dim: #A9BFA0;
+    --accent: #DD94C1;
+    --accent-soft: rgba(221,148,193,0.15);
+    --danger: #C97A5F;
+    font-size: 16px;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+
+  body{
+    min-height:100vh;
+    display:flex;
+  }
+
+  /* ---------- Sidebar de progreso ---------- */
+  .rail{
+    width: 220px;
+    flex-shrink:0;
+    padding: 48px 24px;
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top:0;
+    height:100vh;
+  }
+
+  .rail-title{
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    margin: 0 0 4px;
+  }
+
+  .rail-sub{
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin: 0 0 36px;
+  }
+
+  .rail-steps{
+    list-style:none;
+    margin:0; padding:0;
+    display:flex;
+    flex-direction:column;
+    gap: 4px;
+  }
+
+  .rail-step{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    padding: 10px 10px;
+    border-radius: 6px;
+    cursor:pointer;
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    transition: color .15s ease, background .15s ease;
+  }
+
+  .rail-step:hover{ color: var(--text); }
+
+  .rail-step.active{
+    color: var(--text);
+    background: var(--accent-soft);
+  }
+
+  .rail-step .num{
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-size: 0.8rem;
+    width: 16px;
+  }
+
+  .rail-step.done .num::after{
+    content: "";
+  }
+
+  .rail-progress{
+    margin-top: 40px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow:hidden;
+  }
+
+  .rail-progress-fill{
+    height:100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width .3s ease;
+  }
+
+  /* ---------- Contenido principal ---------- */
+  .main{
+    flex:1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 32px 120px;
+  }
+
+  .brief-header{
+    margin-bottom: 56px;
+  }
+
+  .brief-header h1{
+    font-size: 1.9rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .brief-header p{
+    color: var(--text-dim);
+    font-size: 0.98rem;
+    max-width: 52ch;
+    margin:0;
+  }
+
+  section.step{
+    margin-bottom: 64px;
+    padding-top: 8px;
+    scroll-margin-top: 40px;
+  }
+
+  section.step h2{
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+
+  section.step h2 .step-num{
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  section.step > .step-hint{
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin: 0 0 28px;
+    max-width: 58ch;
+  }
+
+  label{
+    display:block;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .field{
+    margin-bottom: 22px;
+  }
+
+  input[type="text"],
+  textarea{
+    width:100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color .15s ease, background .15s ease;
+  }
+
+  input[type="text"]:focus,
+  textarea:focus{
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-panel-2);
+  }
+
+  input::placeholder, textarea::placeholder{
+    color: #6E8A69;
+  }
+
+  textarea{ min-height: 90px; }
+
+  .row{
+    display:flex;
+    gap: 16px;
+  }
+  .row > .field{ flex:1; }
+
+  /* ---------- Chips (adjetivos, palabras clave) ---------- */
+  .chip-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .chip{
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor:pointer;
+    user-select:none;
+    transition: all .15s ease;
+  }
+
+  .chip:hover{ border-color: var(--accent); color: var(--text); }
+
+  .chip.selected{
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1C3A1E;
+    font-weight: 600;
+  }
+
+  .chip-counter{
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: -10px;
+    margin-bottom: 22px;
+  }
+
+  /* ---------- Tono: slider ---------- */
+  .tone-scale{
+    display:flex;
+    justify-content:space-between;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  input[type="range"]{
+    width:100%;
+    -webkit-appearance:none;
+    appearance:none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 10px 0 4px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width: 16px; height:16px;
+    border-radius:50%;
+    background: var(--accent);
+    cursor:pointer;
+    border: 2px solid #1C3A1E;
+  }
+
+  input[type="range"]::-moz-range-thumb{
+    width: 14px; height:14px;
+    border-radius:50%;
+    background: var(--accent);
+    cursor:pointer;
+    border: 2px solid #1C3A1E;
+  }
+
+  /* ---------- Paletas ---------- */
+  .palette-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .palette-card{
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    cursor:pointer;
+    background: var(--bg-panel);
+    transition: border-color .15s ease, transform .1s ease;
+  }
+
+  .palette-card:hover{ border-color: var(--accent); }
+
+  .palette-card.selected{
+    border-color: var(--accent);
+    background: var(--bg-panel-2);
+  }
+
+  .swatches{
+    display:flex;
+    height: 36px;
+    border-radius: 6px;
+    overflow:hidden;
+    margin-bottom: 10px;
+  }
+
+  .swatches span{ flex:1; }
+
+  .palette-name{
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .palette-card.selected .palette-name{ color: var(--text); }
+
+  .custom-palette{
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    margin-top: 4px;
+  }
+
+  .custom-palette-title{
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .color-picker-row{
+    display:flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .color-picker{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 6px;
+  }
+
+  .color-picker input[type="color"]{
+    width: 48px; height: 48px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    cursor:pointer;
+    padding:0;
+  }
+
+  .color-picker span{
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Tipografía ---------- */
+  .font-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .font-card{
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    cursor:pointer;
+    background: var(--bg-panel);
+    transition: border-color .15s ease;
+  }
+
+  .font-card:hover{ border-color: var(--accent); }
+
+  .font-card.selected{
+    border-color: var(--accent);
+    background: var(--bg-panel-2);
+  }
+
+  .font-preview{
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+
+  .font-label{
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+
+  .font-card.selected .font-label{ color: var(--text); }
+
+  /* ---------- Resumen / envío ---------- */
+  .summary{
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 26px;
+    background: var(--bg-panel);
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+  }
+
+  .summary dt{
+    color: var(--accent);
+    font-size: 0.75rem;
+    text-transform: none;
+    margin-top: 14px;
+  }
+  .summary dt:first-child{ margin-top:0; }
+
+  .summary dd{
+    margin: 4px 0 0;
+    color: var(--text);
+  }
+
+  .submit-btn{
+    background: var(--accent);
+    color: #1C3A1E;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor:pointer;
+    transition: opacity .15s ease, transform .05s ease;
+  }
+
+  .submit-btn:hover{ opacity: 0.92; }
+  .submit-btn:active{ transform: scale(0.98); }
+
+  .submit-btn:disabled{
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .status-msg{
+    margin-top: 16px;
+    font-size: 0.88rem;
+  }
+
+  .status-msg.ok{ color: #8FBF7F; }
+  .status-msg.err{ color: var(--danger); }
+
+  .key-warning{
+    border: 1px solid var(--danger);
+    background: rgba(201,122,95,0.1);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 24px;
+  }
+
+  .key-warning strong{ color: var(--danger); }
+
+  .key-warning input[type="text"]{
+    margin-top: 10px;
+  }
+
+  @media (max-width: 780px){
+    .rail{ display:none; }
+    .main{ padding: 40px 20px 100px; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="rail" aria-label="Progreso del brief">
+    <p class="rail-title">Brief de marca</p>
+    <p class="rail-sub">Completa cada sección</p>
+    <ul class="rail-steps" id="railSteps">
+      <li class="rail-step" data-target="s1"><span class="num">01</span> Información básica</li>
+      <li class="rail-step" data-target="s2"><span class="num">02</span> Personalidad</li>
+      <li class="rail-step" data-target="s3"><span class="num">03</span> Colores</li>
+      <li class="rail-step" data-target="s4"><span class="num">04</span> Tipografía</li>
+      <li class="rail-step" data-target="s5"><span class="num">05</span> Slogan</li>
+    </ul>
+    <div class="rail-progress"><div class="rail-progress-fill" id="progressFill"></div></div>
+  </nav>
+
+  <main class="main">
+    <header class="brief-header">
+      <h1>Cuéntanos sobre tu marca</h1>
+      <p>Completa estas cinco secciones para armar un brief claro. Al final puedes enviarlo directo a tu correo.</p>
+    </header>
+
+    <!-- 1. Información básica -->
+    <section class="step" id="s1">
+      <h2><span class="step-num">01</span> Información básica</h2>
+      <p class="step-hint">Lo esencial: quién eres y qué haces.</p>
+
+      <div class="field">
+        <label for="brandName">Nombre de la marca</label>
+        <input type="text" id="brandName" placeholder="Ej. Verdemonte">
+      </div>
+
+      <div class="field">
+        <label for="industry">Industria o rubro</label>
+        <input type="text" id="industry" placeholder="Ej. Alimentos orgánicos, moda, tecnología...">
+      </div>
+
+      <div class="field">
+        <label for="description">Descripción breve del negocio</label>
+        <textarea id="description" placeholder="¿Qué hace tu marca? ¿A quién le vende? ¿Qué la hace distinta?"></textarea>
+      </div>
+    </section>
+
+    <!-- 2. Personalidad de marca -->
+    <section class="step" id="s2">
+      <h2><span class="step-num">02</span> Personalidad de marca</h2>
+      <p class="step-hint">Elige hasta 5 adjetivos que describan cómo quieres que se sienta tu marca, y ajusta el tono.</p>
+
+      <div class="chip-grid" id="adjectiveGrid"></div>
+      <p class="chip-counter" id="adjectiveCounter">0 / 5 seleccionados</p>
+
+      <div class="field">
+        <label for="toneSlider">Tono de comunicación</label>
+        <div class="tone-scale">
+          <span id="toneLeftLabel">Formal</span>
+          <span id="toneRightLabel">Cercano</span>
+        </div>
+        <input type="range" id="toneSlider" min="0" max="10" value="5">
+        <p class="step-hint" id="toneValue" style="margin-top:8px;">Punto medio entre formal y cercano</p>
+      </div>
+    </section>
+
+    <!-- 3. Paleta de colores -->
+    <section class="step" id="s3">
+      <h2><span class="step-num">03</span> Paleta de colores</h2>
+      <p class="step-hint">Elige una paleta sugerida o define la tuya con los selectores de color.</p>
+
+      <div class="palette-grid" id="paletteGrid"></div>
+
+      <div class="custom-palette">
+        <p class="custom-palette-title">O personaliza tu propia paleta (3 colores)</p>
+        <div class="color-picker-row">
+          <div class="color-picker">
+            <input type="color" id="customColor1" value="#1C3A1E">
+            <span id="customColor1Hex">#1C3A1E</span>
+          </div>
+          <div class="color-picker">
+            <input type="color" id="customColor2" value="#C9A15F">
+            <span id="customColor2Hex">#C9A15F</span>
+          </div>
+          <div class="color-picker">
+            <input type="color" id="customColor3" value="#EFEAD9">
+            <span id="customColor3Hex">#EFEAD9</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Tipografía -->
+    <section class="step" id="s4">
+      <h2><span class="step-num">04</span> Tipografía</h2>
+      <p class="step-hint">Elige un estilo tipográfico de referencia, o escribe el que ya tengas en mente.</p>
+
+      <div class="font-grid" id="fontGrid"></div>
+
+      <div class="field">
+        <label for="customFont">¿Tienes una tipografía específica en mente? (opcional)</label>
+        <input type="text" id="customFont" placeholder="Ej. Futura, Garamond, Neue Montreal...">
+      </div>
+    </section>
+
+    <!-- 5. Slogan y palabras clave -->
+    <section class="step" id="s5">
+      <h2><span class="step-num">05</span> Slogan y palabras clave</h2>
+      <p class="step-hint">Cierra el brief con un posible slogan y las palabras que resumen tu marca.</p>
+
+      <div class="field">
+        <label for="slogan">Slogan (si ya tienes uno, o una idea)</label>
+        <input type="text" id="slogan" placeholder="Ej. Crece con raíces">
+      </div>
+
+      <div class="field">
+        <label for="keywords">Palabras clave (separadas por coma)</label>
+        <input type="text" id="keywords" placeholder="Ej. natural, cercano, confiable, artesanal">
+      </div>
+    </section>
+
+    <!-- Resumen y envío -->
+    <section class="step" id="s6" style="margin-bottom: 40px;">
+      <h2>Resumen</h2>
+      <p class="step-hint">Así se ve tu brief antes de enviarlo.</p>
+
+      <dl class="summary" id="summaryBox">
+        <dt>Marca</dt><dd id="sumName">—</dd>
+        <dt>Industria</dt><dd id="sumIndustry">—</dd>
+        <dt>Adjetivos</dt><dd id="sumAdjectives">—</dd>
+        <dt>Paleta</dt><dd id="sumPalette">—</dd>
+        <dt>Tipografía</dt><dd id="sumFont">—</dd>
+        <dt>Slogan</dt><dd id="sumSlogan">—</dd>
+      </dl>
+
+      <div class="key-warning">
+        <strong>Access Key de Web3Forms ya cargada.</strong> Si alguna vez necesitas cambiarla, consíguela en
+        <span style="color:var(--accent)">web3forms.com</span> con tu email. Ten en cuenta que, al ser un archivo HTML abierto en el navegador,
+        cualquiera que vea el código fuente de esta página podrá ver esta key.
+        <input type="text" id="web3formsKey" placeholder="Pega aquí tu Access Key de Web3Forms" value="47e07f54-b121-4d56-9ce5-91e530c2e3f5">
+      </div>
+
+      <div class="field">
+        <label for="destinationEmail">Correo donde quieres recibir el brief</label>
+        <input type="text" id="destinationEmail" placeholder="tucorreo@ejemplo.com">
+      </div>
+
+      <button class="submit-btn" id="submitBtn">Enviar brief por correo</button>
+      <p class="status-msg" id="statusMsg"></p>
+    </section>
+  </main>
+
+<script>
+  // ---------- Datos ----------
+  const ADJECTIVES = ["Cercana","Audaz","Elegante","Divertida","Confiable","Innovadora","Cálida","Sofisticada","Rebelde","Minimalista","Artesanal","Juvenil","Premium","Honesta","Enérgica"];
+
+  const PALETTES = [
+    { name: "Bosque profundo", colors: ["#1C3A1E","#3B5A38","#C9A15F"] },
+    { name: "Tierra y arena",  colors: ["#4A3728","#B08968","#EAE0D5"] },
+    { name: "Océano frío",     colors: ["#0F2A3F","#3E6E8E","#CFE3EA"] },
+    { name: "Rosa contemporáneo", colors: ["#3A1C2E","#B85C7A","#F2D9E0"] },
+    { name: "Monocromo cálido", colors: ["#1A1A1A","#6E6E6E","#F2EFE9"] },
+    { name: "Cítrico vivo",    colors: ["#2E4B1F","#E8A33D","#FFF3D6"] },
+  ];
+
+  const FONTS = [
+    { name: "Serif clásica", family: "Georgia, 'Times New Roman', serif" },
+    { name: "Sans moderna", family: "system-ui, Arial, sans-serif" },
+    { name: "Monoespaciada", family: "'Courier New', monospace" },
+    { name: "Sans redondeada", family: "'Trebuchet MS', system-ui, sans-serif" },
+  ];
+
+  const state = {
+    adjectives: new Set(),
+    palette: null,
+    font: null,
+  };
+
+  // ---------- Adjetivos ----------
+  const adjGrid = document.getElementById("adjectiveGrid");
+  const adjCounter = document.getElementById("adjectiveCounter");
+
+  ADJECTIVES.forEach(word => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.textContent = word;
+    chip.addEventListener("click", () => {
+      if (state.adjectives.has(word)) {
+        state.adjectives.delete(word);
+        chip.classList.remove("selected");
+      } else {
+        if (state.adjectives.size >= 5) return;
+        state.adjectives.add(word);
+        chip.classList.add("selected");
+      }
+      adjCounter.textContent = `${state.adjectives.size} / 5 seleccionados`;
+      updateSummary();
+    });
+    adjGrid.appendChild(chip);
+  });
+
+  // ---------- Tono ----------
+  const toneSlider = document.getElementById("toneSlider");
+  const toneValue = document.getElementById("toneValue");
+  const toneLabels = {
+    0: "Muy formal e institucional",
+    2: "Formal, con algo de calidez",
+    4: "Balance hacia lo formal",
+    5: "Punto medio entre formal y cercano",
+    6: "Balance hacia lo cercano",
+    8: "Cercano y conversacional",
+    10: "Totalmente informal y cercano",
+  };
+  function describeTone(v){
+    const keys = Object.keys(toneLabels).map(Number).sort((a,b)=>a-b);
+    let closest = keys[0];
+    keys.forEach(k => { if (Math.abs(k-v) < Math.abs(closest-v)) closest = k; });
+    return toneLabels[closest];
+  }
+  toneSlider.addEventListener("input", () => {
+    toneValue.textContent = describeTone(Number(toneSlider.value));
+    updateSummary();
+  });
+
+  // ---------- Paletas ----------
+  const paletteGrid = document.getElementById("paletteGrid");
+  PALETTES.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "palette-card";
+    card.innerHTML = `
+      <div class="swatches">
+        ${p.colors.map(c => `<span style="background:${c}"></span>`).join("")}
+      </div>
+      <div class="palette-name">${p.name}</div>
+    `;
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".palette-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      state.palette = { name: p.name, colors: p.colors, custom: false };
+      updateSummary();
+    });
+    paletteGrid.appendChild(card);
+  });
+
+  // ---------- Paleta personalizada ----------
+  const customInputs = ["customColor1","customColor2","customColor3"];
+  customInputs.forEach(id => {
+    const input = document.getElementById(id);
+    const label = document.getElementById(id + "Hex");
+    input.addEventListener("input", () => {
+      label.textContent = input.value.toUpperCase();
+      document.querySelectorAll(".palette-card").forEach(c => c.classList.remove("selected"));
+      state.palette = {
+        name: "Personalizada",
+        colors: customInputs.map(cid => document.getElementById(cid).value),
+        custom: true
+      };
+      updateSummary();
+    });
+  });
+
+  // ---------- Tipografía ----------
+  const fontGrid = document.getElementById("fontGrid");
+  FONTS.forEach(f => {
+    const card = document.createElement("div");
+    card.className = "font-card";
+    card.innerHTML = `
+      <div class="font-preview" style="font-family:${f.family}">Aa Bb Cc</div>
+      <div class="font-label">${f.name}</div>
+    `;
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".font-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      state.font = f.name;
+      updateSummary();
+    });
+    fontGrid.appendChild(card);
+  });
+
+  document.getElementById("customFont").addEventListener("input", (e) => {
+    if (e.target.value.trim()) {
+      document.querySelectorAll(".font-card").forEach(c => c.classList.remove("selected"));
+      state.font = e.target.value.trim();
+    }
+    updateSummary();
+  });
+
+  // ---------- Campos de texto simples ----------
+  ["brandName","industry","description","slogan","keywords"].forEach(id => {
+    document.getElementById(id).addEventListener("input", updateSummary);
+  });
+
+  // ---------- Resumen ----------
+  function updateSummary(){
+    document.getElementById("sumName").textContent = document.getElementById("brandName").value || "—";
+    document.getElementById("sumIndustry").textContent = document.getElementById("industry").value || "—";
+    document.getElementById("sumAdjectives").textContent = state.adjectives.size ? [...state.adjectives].join(", ") : "—";
+    document.getElementById("sumPalette").textContent = state.palette ? `${state.palette.name} (${state.palette.colors.join(", ")})` : "—";
+    document.getElementById("sumFont").textContent = state.font || "—";
+    document.getElementById("sumSlogan").textContent = document.getElementById("slogan").value || "—";
+  }
+
+  // ---------- Navegación lateral (scrollspy) ----------
+  const railSteps = document.querySelectorAll(".rail-step");
+  const sections = ["s1","s2","s3","s4","s5"].map(id => document.getElementById(id));
+  const progressFill = document.getElementById("progressFill");
+
+  railSteps.forEach(step => {
+    step.addEventListener("click", () => {
+      document.getElementById(step.dataset.target).scrollIntoView({ behavior: "smooth" });
+    });
+  });
+
+  function updateActiveStep(){
+    let activeIndex = 0;
+    sections.forEach((sec, i) => {
+      const rect = sec.getBoundingClientRect();
+      if (rect.top <= 140) activeIndex = i;
+    });
+    railSteps.forEach((step, i) => step.classList.toggle("active", i === activeIndex));
+    progressFill.style.width = `${((activeIndex + 1) / sections.length) * 100}%`;
+  }
+  window.addEventListener("scroll", updateActiveStep);
+  updateActiveStep();
+
+  // ---------- Envío por Web3Forms ----------
+  const submitBtn = document.getElementById("submitBtn");
+  const statusMsg = document.getElementById("statusMsg");
+
+  submitBtn.addEventListener("click", async () => {
+    const accessKey = document.getElementById("web3formsKey").value.trim();
+    const destinationEmail = document.getElementById("destinationEmail").value.trim();
+
+    if (!accessKey) {
+      statusMsg.textContent = "Falta tu Access Key de Web3Forms (ver aviso arriba).";
+      statusMsg.className = "status-msg err";
+      return;
+    }
+    if (!destinationEmail) {
+      statusMsg.textContent = "Escribe el correo donde quieres recibir el brief.";
+      statusMsg.className = "status-msg err";
+      return;
+    }
+
+    const payload = {
+      access_key: accessKey,
+      subject: `Brief de marca: ${document.getElementById("brandName").value || "Sin nombre"}`,
+      email: destinationEmail,
+      "Nombre de marca": document.getElementById("brandName").value || "—",
+      "Industria": document.getElementById("industry").value || "—",
+      "Descripción": document.getElementById("description").value || "—",
+      "Adjetivos": [...state.adjectives].join(", ") || "—",
+      "Tono": describeTone(Number(toneSlider.value)),
+      "Paleta": state.palette ? `${state.palette.name} — ${state.palette.colors.join(", ")}` : "—",
+      "Tipografía": state.font || "—",
+      "Slogan": document.getElementById("slogan").value || "—",
+      "Palabras clave": document.getElementById("keywords").value || "—",
+    };
+
+    submitBtn.disabled = true;
+    statusMsg.textContent = "Enviando...";
+    statusMsg.className = "status-msg";
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        statusMsg.textContent = "Brief enviado. Revisa tu correo en unos minutos.";
+        statusMsg.className = "status-msg ok";
+      } else {
+        statusMsg.textContent = "No se pudo enviar: " + (data.message || "verifica tu Access Key.");
+        statusMsg.className = "status-msg err";
+      }
+    } catch (err) {
+      statusMsg.textContent = "Error de conexión. Intenta de nuevo.";
+      statusMsg.className = "status-msg err";
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
